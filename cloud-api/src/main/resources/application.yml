@@ -1,0 +1,26 @@
+spring:
+  cloud:
+    sentinel:
+      enabled: true
+      transport:
+        dashboard: localhost:8080
+        port: 8719
+      # sentinel 限流规则存到Nacos中
+      datasource:
+        ds1:
+          nacos:
+            server-addr: localhost:8848
+            data-id: sentinel
+            group-id: DEFAULT_GROUP
+            data-type: json
+            rule-type: degrade
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: example-service
+          uri: lb://example-service
+          predicates:
+            - Path=/**
+
