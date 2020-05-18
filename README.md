@@ -22,3 +22,4 @@
 | Sentinel     |               |
 | Redis        |               |
 
+**cloud-api应该与cloud-authc整合成一个**
