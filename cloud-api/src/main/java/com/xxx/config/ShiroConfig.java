@@ -1,12 +1,12 @@
 package com.xxx.config;
 
-import com.xxx.UserRealm;
 import com.xxx.common.utils.RedisUtils;
 import com.xxx.jwt.JwtCredentialsMatcher;
 import com.xxx.jwt.JwtFilter;
 import com.xxx.jwt.JwtRealm;
 import com.xxx.redis.RedisCacheManager;
 import com.xxx.redis.RedisSessionDAO;
+import com.xxx.shiro.UserRealm;
 import org.apache.shiro.authc.Authenticator;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import javax.servlet.Filter;
 import java.util.Arrays;
@@ -38,14 +39,23 @@ import java.util.Map;
 @Configuration
 public class ShiroConfig {
 
-
+    @Bean("redisUtils")
+    public RedisUtils getRedisUtils(RedisTemplate<String ,Object> redisTemplate){
+        return new RedisUtils(redisTemplate);
+    }
+    
+    @Bean("redisTemplate")
+    public RedisTemplate<String ,Object> getRedisTemplate(){
+        return new RedisTemplate<>();
+    }
+    
     /**
      * 设置多个realm
      * @param userRealm userRealm
      * @param jwtRealm  jwtRealm
      * @return authenticator
      */
-    @Bean(name = "authenticator")
+    @Bean("authenticator")
     public Authenticator getAuthenticator(@Qualifier("userRealm") UserRealm userRealm, @Qualifier("jwtRealm") JwtRealm jwtRealm) {
         ModularRealmAuthenticator authenticator = new ModularRealmAuthenticator();
         //设置两个Realm，一个用于用户登录验证和访问权限获取；一个用于jwt token的认证
@@ -59,14 +69,14 @@ public class ShiroConfig {
      * 获得一个认证标准
      * @return userRealm
      */
-    @Bean(name = "userRealm")
+    @Bean("userRealm")
     public UserRealm getUserRealm(@Qualifier("credentialsMatcher") CredentialsMatcher credentialsMatcher) {
         UserRealm userRealm = new UserRealm();
         userRealm.setCredentialsMatcher(credentialsMatcher);
         return userRealm;
     }
 
-    @Bean(name = "jwtRealm")
+    @Bean("jwtRealm")
     public JwtRealm getJwtRealm(JwtCredentialsMatcher credentialsMatcher) {
         JwtRealm jwtRealm = new JwtRealm();
         jwtRealm.setCredentialsMatcher(credentialsMatcher);
@@ -77,7 +87,7 @@ public class ShiroConfig {
      * 加密
      * @return md5加密 散列1024次
      */
-    @Bean(name = "credentialsMatcher")
+    @Bean("credentialsMatcher")
     public CredentialsMatcher getCredentialsMatcher() {
         HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
         credentialsMatcher.setHashAlgorithmName("MD5");
@@ -89,17 +99,17 @@ public class ShiroConfig {
      * 获得安全管理器
      * @param userRealm userRealm
      * @param sessionManager sessionManager
-     * @param cacheManager cacheManager
+     * @param redisCacheManager cacheManager
      * @return securityManager
      */
-    @Bean(name = "securityManager")
+    @Bean("securityManager")
     public DefaultWebSecurityManager getDefaultSecurityManager(@Qualifier("userRealm") UserRealm userRealm,
                                                                @Qualifier("sessionManager") SessionManager sessionManager,
-                                                               @Qualifier("cacheManager") CacheManager cacheManager) {
+                                                               @Qualifier("redisCacheManager") RedisCacheManager redisCacheManager) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
         defaultWebSecurityManager.setRealm(userRealm);
         defaultWebSecurityManager.setSessionManager(sessionManager);
-        defaultWebSecurityManager.setCacheManager(cacheManager);
+        defaultWebSecurityManager.setCacheManager(redisCacheManager);
         return defaultWebSecurityManager;
     }
 
@@ -108,29 +118,29 @@ public class ShiroConfig {
      * @param sessionDAO
      * @return
      */
-    @Bean(name = "sessionManager")
+    @Bean("sessionManager")
     public SessionManager getSessionManager(@Qualifier("sessionDAO") SessionDAO sessionDAO) {
         DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
         sessionManager.setSessionDAO(sessionDAO);
         return sessionManager;
     }
 
-    @Bean(name = "sessionDAO")
+    @Bean("sessionDAO")
     public SessionDAO getSessionDAO(RedisUtils redisUtils) {
         RedisSessionDAO sessionDAO = new RedisSessionDAO();
         sessionDAO.setRedisUtils(redisUtils);
         return sessionDAO;
     }
 
-    @Bean(name = "cacheManager")
-    public CacheManager getCacheManager(RedisUtils redisUtils) {
+    @Bean("redisCacheManager")
+    public RedisCacheManager getCacheManager(RedisUtils redisUtils) {
         RedisCacheManager cacheManager = new RedisCacheManager();
         cacheManager.setRedisUtils(redisUtils);
         return cacheManager;
     }
 
 
-    @Bean(name = "shiroFilterFactoryBean")
+    @Bean("shiroFilterFactoryBean")
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(@Qualifier("securityManager") DefaultWebSecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
@@ -161,12 +171,12 @@ public class ShiroConfig {
      * 配置以下两个bean(DefaultAdvisorAutoProxyCreator(可选)和AuthorizationAttributeSourceAdvisor)即可实现此功能
      */
 
-    @Bean(name = "lifecycleBeanPostProcessor")
+    @Bean("lifecycleBeanPostProcessor")
     public LifecycleBeanPostProcessor getLifecycleBeanPostProcessor() {
         return new LifecycleBeanPostProcessor();
     }
 
-    @Bean(name = "advisorAutoProxyCreator")
+    @Bean("advisorAutoProxyCreator")
     @DependsOn({"lifecycleBeanPostProcessor"})
     public DefaultAdvisorAutoProxyCreator getAdvisorAutoProxyCreator() {
         DefaultAdvisorAutoProxyCreator advisorAutoProxyCreator = new DefaultAdvisorAutoProxyCreator();
@@ -174,7 +184,7 @@ public class ShiroConfig {
         return advisorAutoProxyCreator;
     }
 
-    @Bean(name = "authorizationAttributeSourceAdvisor")
+    @Bean("authorizationAttributeSourceAdvisor")
     public AuthorizationAttributeSourceAdvisor getAuthorizationAttributeSourceAdvisor(@Qualifier("securityManager") DefaultWebSecurityManager securityManager) {
         AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor = new AuthorizationAttributeSourceAdvisor();
         authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);

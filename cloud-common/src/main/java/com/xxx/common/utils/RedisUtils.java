@@ -15,10 +15,10 @@ import java.util.concurrent.TimeUnit;
 public class RedisUtils {
 
     public RedisUtils(RedisTemplate<String, Object> redisTemplate) {
-        RedisUtils.redisTemplate = redisTemplate;
+        this.redisTemplate = redisTemplate;
     }
     
-    private static RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     /**
      * 设置有效时间
@@ -27,7 +27,7 @@ public class RedisUtils {
      * @param timeout 超时时间
      * @return true=设置成功；false=设置失败
      */
-    public static boolean expire(final String key, final long timeout) {
+    public boolean expire(final String key, final long timeout) {
 
         return expire(key, timeout, TimeUnit.MILLISECONDS);
     }
@@ -40,7 +40,7 @@ public class RedisUtils {
      * @param unit    时间单位
      * @return true=设置成功；false=设置失败
      */
-    public static boolean expire(final String key, final long timeout, final TimeUnit unit) {
+    public boolean expire(final String key, final long timeout, final TimeUnit unit) {
 
         Boolean ret = redisTemplate.expire(key, timeout, unit);
         return ret != null && ret;
@@ -52,7 +52,7 @@ public class RedisUtils {
      * @param key 键
      * @return true=删除成功；false=删除失败
      */
-    public static boolean del(final String key) {
+    public boolean del(final String key) {
 
         Boolean ret = redisTemplate.delete(key);
         return ret != null && ret;
@@ -64,7 +64,7 @@ public class RedisUtils {
      * @param keys 键集合
      * @return 成功删除的个数
      */
-    public static long del(final Collection<String> keys) {
+    public long del(final Collection<String> keys) {
 
         Long ret = redisTemplate.delete(keys);
         return ret == null ? 0 : ret;
@@ -76,7 +76,7 @@ public class RedisUtils {
      * @param key   Redis键
      * @param value 值
      */
-    public static void set(final String key, final Object value) {
+    public void set(final String key, final Object value) {
 
         redisTemplate.opsForValue().set(key, value);
     }
@@ -90,7 +90,7 @@ public class RedisUtils {
      * @param value   值
      * @param timeout 有效期，单位秒
      */
-    public static void set(final String key, final Object value, final long timeout) {
+    public void set(final String key, final Object value, final long timeout) {
         redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.MILLISECONDS);
     }
 
@@ -100,12 +100,12 @@ public class RedisUtils {
      * @param key 键
      * @return 对象
      */
-    public static Object get(final String key) {
+    public Object get(final String key) {
 
         return redisTemplate.opsForValue().get(key);
     }
 
-    public static List<Object> multiGet(final String key){
+    public List<Object> multiGet(final String key){
         return redisTemplate.opsForValue().multiGet(keys(key));
     }
 
@@ -118,7 +118,7 @@ public class RedisUtils {
      * @param hKey  Hash键
      * @param value 值
      */
-    public static void hPut(final String key, final String hKey, final Object value) {
+    public void hPut(final String key, final String hKey, final Object value) {
 
         redisTemplate.opsForHash().put(key, hKey, value);
     }
@@ -129,7 +129,7 @@ public class RedisUtils {
      * @param key    Redis键
      * @param values Hash键值对
      */
-    public static void hPutAll(final String key, final Map<String, Object> values) {
+    public void hPutAll(final String key, final Map<String, Object> values) {
 
         redisTemplate.opsForHash().putAll(key, values);
     }
@@ -141,7 +141,7 @@ public class RedisUtils {
      * @param hKey Hash键
      * @return Hash中的对象
      */
-    public static Object hGet(final String key, final String hKey) {
+    public Object hGet(final String key, final String hKey) {
 
         return redisTemplate.opsForHash().get(key, hKey);
     }
@@ -153,7 +153,7 @@ public class RedisUtils {
      * @param hKeys Hash键集合
      * @return Hash对象集合
      */
-    public static List<Object> hMultiGet(final String key, final Collection<Object> hKeys) {
+    public List<Object> hMultiGet(final String key, final Collection<Object> hKeys) {
 
         return redisTemplate.opsForHash().multiGet(key, hKeys);
     }
@@ -167,7 +167,7 @@ public class RedisUtils {
      * @param values 值
      * @return 存入的个数
      */
-    public static long sSet(final String key, final Object... values) {
+    public long sSet(final String key, final Object... values) {
         Long count = redisTemplate.opsForSet().add(key, values);
         return count == null ? 0 : count;
     }
@@ -179,7 +179,7 @@ public class RedisUtils {
      * @param values 值
      * @return 移除的个数
      */
-    public static long sDel(final String key, final Object... values) {
+    public long sDel(final String key, final Object... values) {
         Long count = redisTemplate.opsForSet().remove(key, values);
         return count == null ? 0 : count;
     }
@@ -193,7 +193,7 @@ public class RedisUtils {
      * @param value 数据
      * @return 存入的个数
      */
-    public static long lPush(final String key, final Object value) {
+    public long lPush(final String key, final Object value) {
         Long count = redisTemplate.opsForList().rightPush(key, value);
         return count == null ? 0 : count;
     }
@@ -205,7 +205,7 @@ public class RedisUtils {
      * @param values 多个数据
      * @return 存入的个数
      */
-    public static long lPushAll(final String key, final Collection<Object> values) {
+    public long lPushAll(final String key, final Collection<Object> values) {
         Long count = redisTemplate.opsForList().rightPushAll(key, values);
         return count == null ? 0 : count;
     }
@@ -217,7 +217,7 @@ public class RedisUtils {
      * @param values 多个数据
      * @return 存入的个数
      */
-    public static long lPushAll(final String key, final Object... values) {
+    public long lPushAll(final String key, final Object... values) {
         Long count = redisTemplate.opsForList().rightPushAll(key, values);
         return count == null ? 0 : count;
     }
@@ -230,11 +230,11 @@ public class RedisUtils {
      * @param end   结束位置（start=0，end=-1表示获取全部元素）
      * @return List对象
      */
-    public static List<Object> lGet(final String key, final int start, final int end) {
+    public List<Object> lGet(final String key, final int start, final int end) {
         return redisTemplate.opsForList().range(key, start, end);
     }
 
-    public static Set<String> keys(final String pattern){
+    public Set<String> keys(final String pattern){
         return redisTemplate.keys(pattern + "*");
     }
 
